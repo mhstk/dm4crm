@@ -1,4 +1,4 @@
-from typing import List, Optional, cast, Tuple
+from typing import List, Optional, cast, Tuple, Dict
 from .node.general_node import GeneralNode
 from .node.initial_node import InitialNode
 from .node.non_initial_node import NonInitialNode
@@ -12,13 +12,24 @@ class Dataflow:
         self.target_node: Optional[GeneralNode] = None
         self.ident_number = -1
         self.ident_name = "ident"
+        self.node_connections: List = []
+
+    def set_node_connections(self, connections: List):
+        self.node_connections = connections
+
+    def get_from_port_by_connection(self, from_node: GeneralNode, dest_node: GeneralNode, dest_port: int):
+        # print("node_connections: ", self.node_connections)
+        for f_node, d_node, f_port, d_port in self.node_connections:
+            if f_node == from_node and d_node == dest_node and dest_port == d_port:
+                return f_port
+        return -1
 
     def check_validity(self) -> bool:
         node: GeneralNode = cast(GeneralNode, self.target_node)
         while True:
             if isinstance(node, InitialNode):
                 return True
-            node = cast(NonInitialNode, node)
+            node: NonInitialNode = cast(NonInitialNode, node)
             if not node.get_in_ports():
                 return False
             node = node.get_in_port()
@@ -29,47 +40,60 @@ class Dataflow:
 
     def backward_bfs(self):
         temp_q: List = []
-        frontier_q: List = [self.target_node, ""]
+        frontier_q: List = [self.target_node]
+        connections: Dict = {}
         delayed = []
         while frontier_q:
-            node_ident: Tuple = frontier_q.pop(0)
-            node: GeneralNode = node_ident[0]
+            node: GeneralNode = frontier_q.pop(0)
             nw: NodeWrapper = NodeWrapper(node)
             if node is self.target_node:
-                nw.set_out_idents([self.ident_generator() for _ in node.get_out_ports()])
+                for port, nd in node.get_out_ports().items():
+                    nw.set_out_ident(port, self.ident_generator())
             else:
-                if not all([y in [x.get_node() for x in self.wrap_nodes] for y in node.get_out_ports().values()]):
-                    delayed.append(node_ident)
-                    print(delayed)
+                if not all([y in [x.get_node() for x in self.wrap_nodes] or y is None
+                            for y in node.get_out_ports().values()]):
+                    delayed.append(node)
+                    # print("delayed:", delayed)
                     continue
                 frontier_q = delayed + frontier_q
                 delayed = []
-                for i in range(len(node.get_out_ports().values())):
-                    if node_ident[1] and node.get_out_ports()[i]:
-                        # nw.set_out_idents(nw.get_out_idents() + [temp_q.pop(0)])
-                        nw.set_out_idents(nw.get_out_idents() + [node_ident])
-                    else:
-                        new_ident: str = self.ident_generator()
-                        nw.set_out_idents(nw.get_out_idents() + [new_ident])
+
+                # connections = dict(sorted(connections.items(), key=lambda item: item[0][1]))
+                for port, nd in node.get_out_ports().items():
+                    # print(node, nd)
+                    if not nd:
+                        nw.set_out_ident(port, self.ident_generator())
+
+                for connection in list(connections):
+                    if connection[0] == node:
+                        nw.set_out_ident(connection[1], connections[connection])
+                        del connections[connection]
+                # print(node.get_out_ports())
+            # print("Exploring:", node)
+            # print("final_out_idents", nw.get_out_idents())
+
             if isinstance(node, NonInitialNode):
                 node: NonInitialNode = cast(NonInitialNode, node)
-                for nd in node.get_in_ports().values():
-                    if nd not in frontier_q and nd not in [x.get_node() for x in self.wrap_nodes]\
-                            and nd:
-                        new_ident: str = self.ident_generator()
-                        nw.set_in_idents(nw.get_in_idents() + [new_ident])
-                        frontier_q.append((nd, new_ident))
-                print(frontier_q)
-                # for i in range(len(node.get_in_ports().values())):
-                #     if node.get_in_ports()[i]:
-                #         new_ident: str = self.ident_generator()
-                #         temp_q.append(new_ident)
-                #         nw.set_in_idents(nw.get_in_idents() + [new_ident])
+                nd: GeneralNode
+                for in_port, nd in node.get_in_ports().items():
+
+                    new_ident = self.ident_generator()
+                    nw.set_in_ident(in_port, new_ident)
+                    if nd:
+                        port = self.get_from_port_by_connection(nd, node, in_port)
+                        if port != -1:
+                            # print("inport: ", node, nd)
+                            connections[(nd, port)] = new_ident
+                            if nd not in frontier_q and nd not in delayed:
+                                frontier_q.append(nd)
+                # print("final_in_indents: ", nw.get_in_idents())
+                # print("connections: ", connections)
+                # print("frontier:", frontier_q)
 
             self.wrap_nodes.append(nw)
-            print([x.get_node() for x in self.wrap_nodes])
-            input()
-            print("******************")
+            # print("wrap_nodes:", [x.get_node() for x in self.wrap_nodes])
+            # input()
+            # print("******************")
         print([x.get_node() for x in self.wrap_nodes])
         self.wrap_nodes = self.wrap_nodes[::-1]
 

@@ -28,6 +28,7 @@ class GeneralNode(ABC):
     def set_out_port(self, node: Optional[GeneralNode], port_number: int = 0):
         self._out_port[port_number] = node
 
+
     def connect_to(self, dest_node: NonInitialNode, from_port: int = 0, dest_port: int = 0) -> bool:
         # noinspection PyBroadException
         try:

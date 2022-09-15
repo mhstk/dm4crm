@@ -124,6 +124,8 @@ class Workspace:
             raise Exception("Engine is not initiated")
         df: Dataflow = Dataflow()
         df.target_node = self.nodes[node_id]
+        df.set_node_connections([(self.nodes[f_node], self.nodes[d_node], f_port, d_port)
+                                 for f_node, d_node, f_port, d_port in self.connections])
         df.refresh()
         self.engine.dataflow = df
         self.engine.convert_code()
