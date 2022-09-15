@@ -69,6 +69,8 @@ class PandasEngine(BaseEngine):
             return DuplicateConverter()
         elif isinstance(node, DecisionTreeClassifierNode):
             return DecisionTreeClassifierConverter()
+        elif isinstance(node, ScoreNode):
+            return ScoreConverter()
         else:
             raise Exception(f"Convertor for this node wasn't found: {node}")
 
@@ -83,7 +85,6 @@ class PandasEngine(BaseEngine):
         return code_str
 
     def run_code(self, node_id: int, code: str, output_type: str = 'console', node_mode: str = 'dataframe', *args, **kwargs) -> Any:
-        print(node_mode)
         self.execution_handler.executor = cast(Executor, self.execution_handler.executor)
         # print(code)
         try:
@@ -102,7 +103,6 @@ class PandasEngine(BaseEngine):
         if output_type == 'console':
             output: Dict = {}
             if node_mode == 'estimator':
-                print("Here")
                 self.execution_handler.executor.cache_path = f'{node_id}_cache'
             self.execution_handler.executor.set_output_info(output_type=output_type, output=output)
             self.load_code(code)
@@ -125,11 +125,15 @@ class PandasEngine(BaseEngine):
             return "import pandas\nimport numpy as np\nimport json\n" \
                    + self.converted_code + "\n" \
                    + 'print("{\\"message\\" : \\"Success\\"}")'
-        elif mode == 'predict':
+        # elif mode == 'predict':
+        #     return "import pandas\nimport numpy as np\nimport json\n" \
+        #            + self.converted_code + "\n" \
+        #            + 'result = {"out" :  ident0.values.tolist()}\n' \
+        #            + 'print(json.dumps(result, indent=4))'
+        elif mode == 'metrics':
             return "import pandas\nimport numpy as np\nimport json\n" \
                    + self.converted_code + "\n" \
-                   + 'result = {"out" :  ident0.tolist()}\n' \
-                   + 'print(json.dumps(result, indent=4))'
+                   + 'print(json.dumps(ident0, indent=4))'
 
     def schema_code(self) -> str:
         return "import pandas\n" \

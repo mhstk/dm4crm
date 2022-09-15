@@ -38,8 +38,22 @@ class Dataflow:
         self.ident_number += 1
         return self.ident_name + str(self.ident_number)
 
+    @staticmethod
+    def dependency_nodes(node: GeneralNode):
+        deps: List = []
+        frontier: List = [node]
+        while True:
+            node = frontier.pop(0)
+            if isinstance(node, InitialNode):
+                return deps
+            node = cast(NonInitialNode, node)
+            for nd in node.get_in_ports().values():
+                if nd not in deps:
+                    deps.append(nd)
+                frontier.append(nd)
+
     def backward_bfs(self):
-        temp_q: List = []
+        deps: List = Dataflow.dependency_nodes(self.target_node)
         frontier_q: List = [self.target_node]
         connections: Dict = {}
         delayed = []
@@ -50,7 +64,7 @@ class Dataflow:
                 for port, nd in node.get_out_ports().items():
                     nw.set_out_ident(port, self.ident_generator())
             else:
-                if not all([y in [x.get_node() for x in self.wrap_nodes] or y is None
+                if not all([y in [x.get_node() for x in self.wrap_nodes] or y is None or y not in deps
                             for y in node.get_out_ports().values()]):
                     delayed.append(node)
                     # print("delayed:", delayed)
@@ -61,7 +75,7 @@ class Dataflow:
                 # connections = dict(sorted(connections.items(), key=lambda item: item[0][1]))
                 for port, nd in node.get_out_ports().items():
                     # print(node, nd)
-                    if not nd:
+                    if not nd or nd not in deps:
                         nw.set_out_ident(port, self.ident_generator())
 
                 for connection in list(connections):
@@ -94,7 +108,7 @@ class Dataflow:
             # print("wrap_nodes:", [x.get_node() for x in self.wrap_nodes])
             # input()
             # print("******************")
-        print([x.get_node() for x in self.wrap_nodes])
+        # print([x.get_node() for x in self.wrap_nodes])
         self.wrap_nodes = self.wrap_nodes[::-1]
 
     def refresh(self) -> None:

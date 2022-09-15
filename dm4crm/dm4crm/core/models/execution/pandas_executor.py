@@ -59,7 +59,6 @@ class PandasExecutor(Executor):
             self.output = cast(Dict, self.output)
             print("EXECUTED:\n")
             # df.to_json(orient="table")
-            print(out_str)
             dic = json.loads(out_str)
             # print(dic['data'])
             self.output.update(dic)

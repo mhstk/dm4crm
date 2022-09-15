@@ -28,7 +28,8 @@ class Workspace:
                                 "TrainTestSplit": TrainTestSplitNode, "Concat": ConcatNode, "Duplicate": DuplicateNode}
         self.model_learner_nodes = {"LogisticRegression": LogisticRegressionNode,
                                     "DecisionTreeClassifier": DecisionTreeClassifierNode}
-        self.data_mining_nodes = {**self.model_learner_nodes, "Predict": PredictNode}
+        self.metrics_node = {"Score": ScoreNode}
+        self.data_mining_nodes = {**self.model_learner_nodes, **self.metrics_node, "Predict": PredictNode}
 
     @staticmethod
     def get_workspace():
@@ -145,11 +146,14 @@ class Workspace:
     def show(self):
         self.engine = cast(BaseEngine, self.engine)
         mode = ''
-        if type(self.engine.dataflow.target_node) in self.transform_nodes.values():
+        if type(self.engine.dataflow.target_node) in self.transform_nodes.values() or\
+                type(self.engine.dataflow.target_node) == PredictNode:
             mode = 'dataframe'
         elif type(self.engine.dataflow.target_node) in self.model_learner_nodes.values():
             mode = 'estimator'
-        elif type(self.engine.dataflow.target_node) == PredictNode:
-            mode = 'predict'
+        # elif type(self.engine.dataflow.target_node) == PredictNode:
+        #     mode = 'data'
+        elif type(self.engine.dataflow.target_node) in self.metrics_node.values():
+            mode = 'metrics'
         code: str = self.engine.runnable_code(mode)
         return self.run_code(code, 'console', node_mode=mode)
