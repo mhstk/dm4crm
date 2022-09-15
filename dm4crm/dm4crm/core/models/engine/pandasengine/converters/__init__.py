@@ -20,3 +20,5 @@ from .train_test_split_converter import TrainTestSplitConverter
 from .predict_converter import PredictConverter
 from .concat_converter import ConcatConverter
 from .duplicate_converter import DuplicateConverter
+from .decision_tree_classifier_converter import DecisionTreeClassifierConverter
+from .score_converter import ScoreConverter

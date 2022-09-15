@@ -26,7 +26,8 @@ class Workspace:
                                 "Union": UnionNode, "CaseWhen": CaseWhenNode, "Where": WhereNode,
                                 "SeparateTargetColumn": SeparateTargetColumnNode, "DropColumn": DropColumnNode,
                                 "TrainTestSplit": TrainTestSplitNode, "Concat": ConcatNode, "Duplicate": DuplicateNode}
-        self.model_learner_nodes = {"LogisticRegression": LogisticRegressionNode}
+        self.model_learner_nodes = {"LogisticRegression": LogisticRegressionNode,
+                                    "DecisionTreeClassifier": DecisionTreeClassifierNode}
         self.data_mining_nodes = {**self.model_learner_nodes, "Predict": PredictNode}
 
     @staticmethod

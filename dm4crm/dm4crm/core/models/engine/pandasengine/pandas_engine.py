@@ -67,6 +67,8 @@ class PandasEngine(BaseEngine):
             return ConcatConverter()
         elif isinstance(node, DuplicateNode):
             return DuplicateConverter()
+        elif isinstance(node, DecisionTreeClassifierNode):
+            return DecisionTreeClassifierConverter()
         else:
             raise Exception(f"Convertor for this node wasn't found: {node}")
 

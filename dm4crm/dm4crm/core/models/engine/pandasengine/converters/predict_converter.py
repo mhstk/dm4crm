@@ -15,7 +15,7 @@ class PredictConverter(Converter):
         code_str = ''
 
         code_str += f'{out_port_ident}_temp = {in_port_ident}.predict({in_port_ident_1})\n'
-        code_str += f'{out_port_ident} = pandas.DataFrame({out_port_ident}_temp, columns=["PREDICTION"])'
+        code_str += f'{out_port_ident} = pandas.DataFrame({out_port_ident}_temp, columns=["{node.target_name}_PREDICTION"])'
 
         return code_str
 
