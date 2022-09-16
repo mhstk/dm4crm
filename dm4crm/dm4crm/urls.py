@@ -19,6 +19,7 @@ from .core import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('resetWorkspace/', views.reset_workspace),
     path('createNode/<node_name>/', views.create_node),
     path('<node_name>/info', views.node_name_info),
     path('currNodes/', views.get_curr_nodes),

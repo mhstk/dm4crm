@@ -22,3 +22,4 @@ from .concat_converter import ConcatConverter
 from .duplicate_converter import DuplicateConverter
 from .decision_tree_classifier_converter import DecisionTreeClassifierConverter
 from .score_converter import ScoreConverter
+from .random_forest_classifier_converter import RandomForestClassifierConverter

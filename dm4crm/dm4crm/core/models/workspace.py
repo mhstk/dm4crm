@@ -27,7 +27,8 @@ class Workspace:
                                 "SeparateTargetColumn": SeparateTargetColumnNode, "DropColumn": DropColumnNode,
                                 "TrainTestSplit": TrainTestSplitNode, "Concat": ConcatNode, "Duplicate": DuplicateNode}
         self.model_learner_nodes = {"LogisticRegression": LogisticRegressionNode,
-                                    "DecisionTreeClassifier": DecisionTreeClassifierNode}
+                                    "DecisionTreeClassifier": DecisionTreeClassifierNode,
+                                    "RandomForestClassifier": RandomForestClassifierNode}
         self.metrics_node = {"Score": ScoreNode}
         self.data_mining_nodes = {**self.model_learner_nodes, **self.metrics_node, "Predict": PredictNode}
 
@@ -38,6 +39,10 @@ class Workspace:
         Workspace.ws = Workspace()
         Workspace.ws.available_nodes = {**Workspace.ws.transform_nodes, **Workspace.ws.data_mining_nodes}
         return Workspace.ws
+
+    def reset_workspace(self):
+        Workspace.ws = None
+        Workspace.get_workspace()
 
     def get_nodes(self):
         return self.nodes

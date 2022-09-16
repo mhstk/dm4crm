@@ -1,4 +1,4 @@
-from typing import List, Optional, cast, Tuple, Dict
+from typing import List, Optional, cast, Dict
 from .node.general_node import GeneralNode
 from .node.initial_node import InitialNode
 from .node.non_initial_node import NonInitialNode
@@ -29,8 +29,9 @@ class Dataflow:
         while True:
             if isinstance(node, InitialNode):
                 return True
+            print(node)
             node: NonInitialNode = cast(NonInitialNode, node)
-            if not node.get_in_ports():
+            if not node.get_in_port(0):
                 return False
             node = node.get_in_port()
 
@@ -47,6 +48,7 @@ class Dataflow:
             if isinstance(node, InitialNode):
                 return deps
             node = cast(NonInitialNode, node)
+            print(node)
             for nd in node.get_in_ports().values():
                 if nd not in deps:
                     deps.append(nd)
@@ -96,7 +98,6 @@ class Dataflow:
                     if nd:
                         port = self.get_from_port_by_connection(nd, node, in_port)
                         if port != -1:
-                            # print("inport: ", node, nd)
                             connections[(nd, port)] = new_ident
                             if nd not in frontier_q and nd not in delayed:
                                 frontier_q.append(nd)

@@ -71,6 +71,8 @@ class PandasEngine(BaseEngine):
             return DecisionTreeClassifierConverter()
         elif isinstance(node, ScoreNode):
             return ScoreConverter()
+        elif isinstance(node, RandomForestClassifierNode):
+            return RandomForestClassifierConverter()
         else:
             raise Exception(f"Convertor for this node wasn't found: {node}")
 

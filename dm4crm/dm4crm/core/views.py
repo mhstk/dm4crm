@@ -2,7 +2,7 @@ import json
 from django.http import HttpResponse, JsonResponse
 # Create your views here.
 from django.views.decorators.csrf import csrf_exempt
-from .models.workspace import Workspace, LimitNode, CSVReaderNode
+from .models.workspace import Workspace
 
 
 def get_workspace():
@@ -10,6 +10,15 @@ def get_workspace():
     ws.engine_type = 'pandas'
     ws.new_engine()
     return ws
+
+
+@csrf_exempt
+def reset_workspace(request):
+    if request.method == 'GET':
+        ws = get_workspace()
+        ws.reset_workspace()
+        return HttpResponse("Success")
+    return HttpResponse("BAD")
 
 
 @csrf_exempt
