@@ -11,6 +11,8 @@ def create_node(name, in_type="transform"):
     node_module_name = name + "_node"
     if in_type.lower() == 'transform':
         path = os.path.join(BASE_DIR, "models", "Node", "Transform")
+    if in_type.lower() == 'io':
+        path = os.path.join(BASE_DIR, "models", "Node", "io")
     elif in_type.lower() == 'datamining':
         path = os.path.join(BASE_DIR, "models", "Node", "datamining")
     if path:
