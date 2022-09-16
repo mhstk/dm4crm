@@ -3,3 +3,4 @@ from .predict_node import PredictNode
 from .decision_tree_classifier_node import DecisionTreeClassifierNode
 from .score_node import ScoreNode
 from .random_forest_classifier_node import RandomForestClassifierNode
+from .neural_network_classifier_node import NeuralNetworkClassifierNode

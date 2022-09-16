@@ -23,3 +23,6 @@ from .duplicate_converter import DuplicateConverter
 from .decision_tree_classifier_converter import DecisionTreeClassifierConverter
 from .score_converter import ScoreConverter
 from .random_forest_classifier_converter import RandomForestClassifierConverter
+from .csv_writer_converter import CSVWriterConverter
+from .mysql_reader_converter import MysqlReaderConverter
+from .neural_network_classifier_converter import NeuralNetworkClassifierConverter
