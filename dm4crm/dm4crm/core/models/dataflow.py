@@ -29,7 +29,6 @@ class Dataflow:
         while True:
             if isinstance(node, InitialNode):
                 return True
-            print(node)
             node: NonInitialNode = cast(NonInitialNode, node)
             if not node.get_in_port(0):
                 return False
@@ -48,7 +47,6 @@ class Dataflow:
             if isinstance(node, InitialNode):
                 return deps
             node = cast(NonInitialNode, node)
-            print(node)
             for nd in node.get_in_ports().values():
                 if nd not in deps:
                     deps.append(nd)

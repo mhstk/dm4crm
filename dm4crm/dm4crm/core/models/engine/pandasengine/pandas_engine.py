@@ -16,6 +16,8 @@ class PandasEngine(BaseEngine):
         self.execution_handler: PandasLocalExecutionHandler = cast(PandasLocalExecutionHandler, self.execution_handler)
         self.node_converter_map: Dict = {LimitNode: LimitConverter,
                                          CSVReaderNode: CSVReaderConverter,
+                                         MysqlReaderNode: MysqlReaderConverter,
+                                         CSVWriterNode: CSVWriterConverter,
                                          SelectColumnNode: SelectColumnConverter,
                                          ChangeColumnTypeNode: ChangeColumnTypeConverter,
                                          SortNode: SortConverter,
@@ -37,6 +39,7 @@ class PandasEngine(BaseEngine):
                                          LogisticRegressionNode: LogisticRegressionConverter,
                                          DecisionTreeClassifierNode: DecisionTreeClassifierConverter,
                                          RandomForestClassifierNode: RandomForestClassifierConverter,
+                                         NeuralNetworkClassifierNode: NeuralNetworkClassifierConverter,
                                          ScoreNode: ScoreConverter,
                                          PredictNode: PredictConverter}
 
@@ -100,7 +103,7 @@ class PandasEngine(BaseEngine):
                    + "result = ident0.iloc[0:20].to_json(orient='table')\n" \
                    + "parsed = json.loads(result)\n" \
                    + "print(json.dumps(parsed, indent=4))"
-        elif mode == 'estimator':
+        elif mode == 'estimator' or mode == 'write':
             return "import pandas\nimport numpy as np\nimport json\n" \
                    + self.converted_code + "\n" \
                    + 'print("{\\"message\\" : \\"Success\\"}")'

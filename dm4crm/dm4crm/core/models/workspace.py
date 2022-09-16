@@ -18,17 +18,31 @@ class Workspace:
         self.available_nodes: Dict = {}
         self.connections: List = []
         self.new_node_id = 0
-        self.transform_nodes = {"CSVReader": CSVReaderNode, "Limit": LimitNode, "Shuffle": ShuffleRowsNode,
-                                "ConstantColumn": ConstantColumnNode, "ChangeColumnType": ChangeColumnTypeNode,
-                                "SelectColumn": SelectColumnNode, "Sort": SortNode,
-                                "SplitColumn": SplitColumnNode, "Groupby": GroupbyNode,
-                                "IsMissing": IsMissingNode, "FillMissing": FillMissingNode, "Join": JoinNode,
-                                "Union": UnionNode, "CaseWhen": CaseWhenNode, "Where": WhereNode,
-                                "SeparateTargetColumn": SeparateTargetColumnNode, "DropColumn": DropColumnNode,
-                                "TrainTestSplit": TrainTestSplitNode, "Concat": ConcatNode, "Duplicate": DuplicateNode}
+        self.io_nodes = {"CSVReader": CSVReaderNode,
+                         "CSVWriter": CSVWriterNode,
+                         "MysqlReader": MysqlReaderNode}
+        self.transform_nodes = {"Limit": LimitNode, "Shuffle": ShuffleRowsNode,
+                                "ConstantColumn": ConstantColumnNode,
+                                "ChangeColumnType": ChangeColumnTypeNode,
+                                "SelectColumn": SelectColumnNode,
+                                "Sort": SortNode,
+                                "SplitColumn": SplitColumnNode,
+                                "Groupby": GroupbyNode,
+                                "IsMissing": IsMissingNode,
+                                "FillMissing": FillMissingNode,
+                                "Join": JoinNode,
+                                "Union": UnionNode,
+                                "CaseWhen": CaseWhenNode,
+                                "Where": WhereNode,
+                                "SeparateTargetColumn": SeparateTargetColumnNode,
+                                "DropColumn": DropColumnNode,
+                                "TrainTestSplit": TrainTestSplitNode,
+                                "Concat": ConcatNode,
+                                "Duplicate": DuplicateNode}
         self.model_learner_nodes = {"LogisticRegression": LogisticRegressionNode,
                                     "DecisionTreeClassifier": DecisionTreeClassifierNode,
-                                    "RandomForestClassifier": RandomForestClassifierNode}
+                                    "RandomForestClassifier": RandomForestClassifierNode,
+                                    "NeuralNetworkClassifier": NeuralNetworkClassifierNode}
         self.metrics_node = {"Score": ScoreNode}
         self.data_mining_nodes = {**self.model_learner_nodes, **self.metrics_node, "Predict": PredictNode}
 
@@ -37,7 +51,9 @@ class Workspace:
         if Workspace.ws:
             return Workspace.ws
         Workspace.ws = Workspace()
-        Workspace.ws.available_nodes = {**Workspace.ws.transform_nodes, **Workspace.ws.data_mining_nodes}
+        Workspace.ws.available_nodes = {**Workspace.ws.io_nodes,
+                                        **Workspace.ws.transform_nodes,
+                                        **Workspace.ws.data_mining_nodes}
         return Workspace.ws
 
     def reset_workspace(self):
@@ -65,9 +81,8 @@ class Workspace:
     def get_available_nodes(self):
         return self.available_nodes
 
-    def full_duplicate_node(self, node_id):
-        # TODO
-        pass
+    def copy_node(self, node_id):
+        print('__dict__' in dir(self.nodes[node_id]), self.nodes[node_id])
 
     def create_node(self, node_type: str, **kwargs) -> int:
         new_node: GeneralNode
@@ -152,12 +167,14 @@ class Workspace:
         self.engine = cast(BaseEngine, self.engine)
         mode = ''
         if type(self.engine.dataflow.target_node) in self.transform_nodes.values() or\
-                type(self.engine.dataflow.target_node) == PredictNode:
+                type(self.engine.dataflow.target_node) == PredictNode or \
+                type(self.engine.dataflow.target_node) == CSVReaderNode or\
+                type(self.engine.dataflow.target_node) == MysqlReaderNode:
             mode = 'dataframe'
         elif type(self.engine.dataflow.target_node) in self.model_learner_nodes.values():
             mode = 'estimator'
-        # elif type(self.engine.dataflow.target_node) == PredictNode:
-        #     mode = 'data'
+        elif type(self.engine.dataflow.target_node) == CSVWriterNode:
+            mode = 'write'
         elif type(self.engine.dataflow.target_node) in self.metrics_node.values():
             mode = 'metrics'
         code: str = self.engine.runnable_code(mode)
