@@ -16,7 +16,7 @@ node_id3 = ws.create_node("TrainTestSplit", train_size=0.8)
 node_id4 = ws.create_node("SeparateTargetColumn", target_column=["CHURN"])
 node_id5 = ws.create_node("SeparateTargetColumn", target_column=["CHURN"])
 node_id6 = ws.create_node("Duplicate")
-node_id7 = ws.create_node("RandomForestClassifier")
+node_id7 = ws.create_node("NeuralNetworkClassifier", hidden_layer_sizes=(100, 100))
 
 node_id8 = ws.create_node("Predict", target_name="CHURN")
 
@@ -24,6 +24,7 @@ node_id8 = ws.create_node("Predict", target_name="CHURN")
 # node_id10 = ws.create_node("Concat")
 
 node_id9 = ws.create_node("Score")
+node_id10 = ws.create_node("CSVWriter", file_name=r"C:\Users\mhset\OneDrive\Desktop\telco_churn_output.csv")
 
 # node_id2 = ws.create_node("SelectColumn", selected_columns=['play', 'windy'], alias={'play': 'not_play'})
 # node_id3 = ws.create_node("ChangeColumnType", new_type={'windy': 'str'})
@@ -55,7 +56,7 @@ ws.connect_nodes(node_id5, node_id9, 1, 1)
 
 
 # -----------------------------------
-ws.compile(node_id8)
+ws.compile(node_id9)
 x = ws.show()
 x = json.dumps(x, indent=4)
 print(x)
