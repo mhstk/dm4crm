@@ -10,11 +10,35 @@ from ...schema.schema import Schema
 
 
 class PandasEngine(BaseEngine):
-    __slots__ = "_dataflow", "_execution_handler", "_converted_code"
 
     def __init__(self) -> None:
         super().__init__()
         self.execution_handler: PandasLocalExecutionHandler = cast(PandasLocalExecutionHandler, self.execution_handler)
+        self.node_converter_map: Dict = {LimitNode: LimitConverter,
+                                         CSVReaderNode: CSVReaderConverter,
+                                         SelectColumnNode: SelectColumnConverter,
+                                         ChangeColumnTypeNode: ChangeColumnTypeConverter,
+                                         SortNode: SortConverter,
+                                         ShuffleRowsNode: ShuffleRowsConverter,
+                                         SplitColumnNode: SplitColumnConverter,
+                                         ConstantColumnNode: ConstantColumnConverter,
+                                         GroupbyNode: GroupbyConverter,
+                                         IsMissingNode: IsMissingConverter,
+                                         FillMissingNode: FillMissingConverter,
+                                         JoinNode: JoinConverter,
+                                         UnionNode: UnionConverter,
+                                         CaseWhenNode: CaseWhenConverter,
+                                         WhereNode: WhereConverter,
+                                         DuplicateNode: DuplicateConverter,
+                                         ConcatNode: ConcatConverter,
+                                         SeparateTargetColumnNode: SeparateTargetColumnConverter,
+                                         DropColumnNode: DropColumnConverter,
+                                         TrainTestSplitNode: TrainTestSplitConverter,
+                                         LogisticRegressionNode: LogisticRegressionConverter,
+                                         DecisionTreeClassifierNode: DecisionTreeClassifierConverter,
+                                         RandomForestClassifierNode: RandomForestClassifierConverter,
+                                         ScoreNode: ScoreConverter,
+                                         PredictNode: PredictConverter}
 
     def set_run_env(self, run_env: str):
         self.execution_handler.run_env = run_env
@@ -23,56 +47,8 @@ class PandasEngine(BaseEngine):
         self.execution_handler.temp_dir = temp_dir
 
     def dispatcher(self, node: GeneralNode) -> Converter:
-        if isinstance(node, LimitNode):
-            return LimitConverter()
-        elif isinstance(node, CSVReaderNode):
-            return CSVReaderConverter()
-        elif isinstance(node, SelectColumnNode):
-            return SelectColumnConverter()
-        elif isinstance(node, ChangeColumnTypeNode):
-            return ChangeColumnTypeConverter()
-        elif isinstance(node, SortNode):
-            return SortConverter()
-        elif isinstance(node, ShuffleRowsNode):
-            return ShuffleRowsConverter()
-        elif isinstance(node, SplitColumnNode):
-            return SplitColumnConverter()
-        elif isinstance(node, ConstantColumnNode):
-            return ConstantColumnConverter()
-        elif isinstance(node, GroupbyNode):
-            return GroupbyConverter()
-        elif isinstance(node, IsMissingNode):
-            return IsMissingConverter()
-        elif isinstance(node, FillMissingNode):
-            return FillMissingConverter()
-        elif isinstance(node, JoinNode):
-            return JoinConverter()
-        elif isinstance(node, UnionNode):
-            return UnionConverter()
-        elif isinstance(node, CaseWhenNode):
-            return CaseWhenConverter()
-        elif isinstance(node, WhereNode):
-            return WhereConverter()
-        elif isinstance(node, SeparateTargetColumnNode):
-            return SeparateTargetColumnConverter()
-        elif isinstance(node, DropColumnNode):
-            return DropColumnConverter()
-        elif isinstance(node, TrainTestSplitNode):
-            return TrainTestSplitConverter()
-        elif isinstance(node, LogisticRegressionNode):
-            return LogisticRegressionConverter()
-        elif isinstance(node, PredictNode):
-            return PredictConverter()
-        elif isinstance(node, ConcatNode):
-            return ConcatConverter()
-        elif isinstance(node, DuplicateNode):
-            return DuplicateConverter()
-        elif isinstance(node, DecisionTreeClassifierNode):
-            return DecisionTreeClassifierConverter()
-        elif isinstance(node, ScoreNode):
-            return ScoreConverter()
-        elif isinstance(node, RandomForestClassifierNode):
-            return RandomForestClassifierConverter()
+        if type(node) in self.node_converter_map:
+            return self.node_converter_map[type(node)]()
         else:
             raise Exception(f"Convertor for this node wasn't found: {node}")
 
@@ -86,7 +62,8 @@ class PandasEngine(BaseEngine):
         self.converted_code = code_str
         return code_str
 
-    def run_code(self, node_id: int, code: str, output_type: str = 'console', node_mode: str = 'dataframe', *args, **kwargs) -> Any:
+    def run_code(self, node_id: int, code: str, output_type: str = 'console', node_mode: str = 'dataframe', *args,
+                 **kwargs) -> Any:
         self.execution_handler.executor = cast(Executor, self.execution_handler.executor)
         # print(code)
         try:
@@ -96,7 +73,7 @@ class PandasEngine(BaseEngine):
         self.execution_handler.create_executor()
         if output_type == 'schema':
             schema = Schema()
-        # print(schema)
+            # print(schema)
             self.execution_handler.executor.set_output_info(output_type=output_type, output=schema)
             self.load_code(code)
             self.execution_handler.executor.start()
@@ -139,8 +116,8 @@ class PandasEngine(BaseEngine):
 
     def schema_code(self) -> str:
         return "import pandas\n" \
-              + self.converted_code + "\n" \
-              + '''
+               + self.converted_code + "\n" \
+               + '''
 for index, value in ident0.dtypes.items():
     print(index, value)
 print("DEL####DEL")

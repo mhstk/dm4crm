@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 
 from .converter import Converter
 from ...dataflow import Dataflow
@@ -8,15 +8,24 @@ from ...node.general_node import GeneralNode
 
 
 class BaseEngine(ABC):
-    __slots__ = "_dataflow", "_execution_handler", "_converted_code"
+    __slots__ = "_dataflow", "_execution_handler", "_converted_code", "_node_converter_map"
 
     def __init__(self) -> None:
         self._dataflow: Optional[Dataflow] = None
         self._execution_handler: Optional[ExecutionHandler] = None
         self._converted_code: str = ''
+        self._node_converter_map: Dict = {}
 
     def load_code(self, code: str):
         self.execution_handler.update_code(code)
+
+    @property
+    def node_converter_map(self):
+        return self._node_converter_map
+
+    @node_converter_map.setter
+    def node_converter_map(self, value):
+        self._node_converter_map = value
 
     @property
     def converted_code(self):
