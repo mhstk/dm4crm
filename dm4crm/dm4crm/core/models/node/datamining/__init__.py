@@ -4,3 +4,4 @@ from .decision_tree_classifier_node import DecisionTreeClassifierNode
 from .score_node import ScoreNode
 from .random_forest_classifier_node import RandomForestClassifierNode
 from .neural_network_classifier_node import NeuralNetworkClassifierNode
+from .mini_batch_k_means_cluster_node import MiniBatchKMeansClusterNode

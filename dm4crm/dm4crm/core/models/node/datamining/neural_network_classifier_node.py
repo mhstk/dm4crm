@@ -39,6 +39,8 @@ class NeuralNetworkClassifierNode(NonInitialNode):
         self.max_iter = max_iter
         self.shuffle = shuffle
 
+        self.set_in_port(None, 1)
+
     def set_attribute(self, *args, **kwargs):
         self.hidden_layer_sizes = kwargs.get('hidden_layer_sizes', self.hidden_layer_sizes)
         self.activation = kwargs.get('activation', self.activation)

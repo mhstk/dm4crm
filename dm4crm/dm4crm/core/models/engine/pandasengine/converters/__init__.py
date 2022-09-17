@@ -26,3 +26,4 @@ from .random_forest_classifier_converter import RandomForestClassifierConverter
 from .csv_writer_converter import CSVWriterConverter
 from .mysql_reader_converter import MysqlReaderConverter
 from .neural_network_classifier_converter import NeuralNetworkClassifierConverter
+from .mini_batch_k_means_cluster_converter import MiniBatchKMeansClusterConverter

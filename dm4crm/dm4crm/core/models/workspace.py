@@ -21,7 +21,8 @@ class Workspace:
         self.io_nodes = {"CSVReader": CSVReaderNode,
                          "CSVWriter": CSVWriterNode,
                          "MysqlReader": MysqlReaderNode}
-        self.transform_nodes = {"Limit": LimitNode, "Shuffle": ShuffleRowsNode,
+        self.transform_nodes = {"Limit": LimitNode,
+                                "Shuffle": ShuffleRowsNode,
                                 "ConstantColumn": ConstantColumnNode,
                                 "ChangeColumnType": ChangeColumnTypeNode,
                                 "SelectColumn": SelectColumnNode,
