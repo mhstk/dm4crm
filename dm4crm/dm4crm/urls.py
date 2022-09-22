@@ -21,7 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('resetWorkspace/', views.reset_workspace),
     path('createNode/<node_name>/', views.create_node),
-    path('<node_name>/info', views.node_name_info),
+    path('<node_name>/info/', views.node_name_info),
     path('currNodes/', views.get_curr_nodes),
     path('availableNodes/', views.get_available_nodes),
     path('connectedNodes/', views.get_connected_nodes),
@@ -30,4 +30,5 @@ urlpatterns = [
     path('<node_id>/show/', views.show),
     path('<node_id>/edit/', views.edit_node),
     path('<node_id>/remove/', views.remove),
+    path('stream/', views.streamed),
 ]

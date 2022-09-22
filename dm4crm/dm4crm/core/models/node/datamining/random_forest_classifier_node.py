@@ -5,17 +5,17 @@ from ..non_initial_node import NonInitialNode
 
 class RandomForestClassifierNode(NonInitialNode):
     __slots__ = \
-        'n_estimators' \
-        'criterion' \
-        'max_depth' \
-        'min_samples_split' \
-        'min_samples_leaf' \
-        'min_weight_fraction_leaf' \
-        'max_features' \
-        'max_leaf_nodes' \
-        'min_impurity_decrease' \
-        'bootstrap' \
-        'oob_score' \
+        'n_estimators', \
+        'criterion', \
+        'max_depth', \
+        'min_samples_split', \
+        'min_samples_leaf', \
+        'min_weight_fraction_leaf', \
+        'max_features', \
+        'max_leaf_nodes', \
+        'min_impurity_decrease', \
+        'bootstrap', \
+        'oob_score', \
         'n_jobs'
 
     def __init__(self,

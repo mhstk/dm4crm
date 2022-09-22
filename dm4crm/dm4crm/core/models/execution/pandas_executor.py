@@ -1,10 +1,10 @@
-import json
 import os
 import subprocess
 import sys
-from typing import Dict, cast, List, Any
+from typing import Dict, cast, Any
 
 from .executor import Executor
+from ..utils import *
 from ..schema.column import Column
 from ..schema.schema import Schema
 
@@ -45,12 +45,22 @@ class PandasExecutor(Executor):
         if sys.platform.startswith('win'):
             python_path += ".exe"
         print("Running code...")
-        output: str = subprocess.check_output([python_path, code_path], env=my_env)
-        print("DONE\n\n-----------------------")
-        return output.decode('utf8')
+        # output: str = subprocess.check_output([python_path, code_path], env=my_env)
+        process: subprocess.Popen[bytes] = subprocess.Popen([python_path, code_path], env=my_env,
+                                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # out_data = ''
+        # while '#LOG#ENDRUNNIG#' not in out_data:
+        #     out_data = process.stdout.readline().decode('utf8')
+        #     if "#LOG#NODEINFO" in out_data:
+        #         print(out_data)
+        output, error = process.communicate()
 
-        # process: subprocess.Popen[bytes] = subprocess.Popen([python_path, code_path], env=my_env,
-        #                                                     stdout=subprocess.PIPE)
+        print("DONE\n\n-----------------------")
+        output = output.decode('utf8')
+        if error:
+            output += "\nError: \n" + error.decode('utf8')
+        return output
+
         # for line in process.stdout:
         #     print(line.decode('utf8'), end="")
 
@@ -58,10 +68,11 @@ class PandasExecutor(Executor):
         if self.output_type == 'console':
             self.output = cast(Dict, self.output)
             print("EXECUTED:\n")
-            # df.to_json(orient="table")
-            dic = json.loads(out_str)
-            # print(dic['data'])
-            self.output.update(dic)
+            # print(out_str)
+            out = output_parse(out_str)
+            self.output.update(out)
+            # dic = json.loads(out_str)
+            # self.output.update(dic)
         elif self.output_type == 'schema':
             self.output = cast(Schema, self.output)
             # print(out_str)

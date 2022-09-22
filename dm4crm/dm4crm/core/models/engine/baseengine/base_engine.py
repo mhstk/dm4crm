@@ -56,7 +56,7 @@ class BaseEngine(ABC):
         pass
 
     @abstractmethod
-    def convert_code(self) -> str:
+    def convert_code(self, nodes: Optional[Dict] = None) -> str:
         pass
 
     @abstractmethod

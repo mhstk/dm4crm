@@ -1,4 +1,5 @@
-from typing import cast, Any, Dict
+import json
+from typing import cast, Any, Dict, Optional
 
 from .converters import *
 from ...execution.executor import Executor
@@ -55,12 +56,15 @@ class PandasEngine(BaseEngine):
         else:
             raise Exception(f"Convertor for this node wasn't found: {node}")
 
-    def convert_code(self) -> str:
+    def convert_code(self, nodes: Optional[Dict] = None) -> str:
         code_str: str = ""
         for node_wrapper in self.dataflow.wrap_nodes:
             converter: Converter = self.dispatcher(node_wrapper.get_node()).set_node_wrapper(node_wrapper)
             out = converter.convert()
             code_str += out + "\n"
+            if nodes:
+                log_info: Dict = {"node_id": nodes.get(node_wrapper.get_node()), "status": "compile_succ"}
+                code_str += "print('#LOG#NODEINFO#" + json.dumps(log_info) + "')\n"
 
         self.converted_code = code_str
         return code_str
@@ -100,9 +104,11 @@ class PandasEngine(BaseEngine):
         if mode == 'dataframe':
             return "import pandas\nimport numpy as np\nimport json\n" \
                    + self.converted_code + "\n" \
-                   + "result = ident0.iloc[0:20].to_json(orient='table')\n" \
-                   + "parsed = json.loads(result)\n" \
-                   + "print(json.dumps(parsed, indent=4))"
+                   + "result = ident0.iloc[0:20]\n" \
+                   + "print(result)\nprint('#LOG#ENDRUNNIG#')\n"
+                   # + "result = ident0.iloc[0:20].to_json(orient='table')\n" \
+                   # + "parsed = json.loads(result)\n" \
+                   # + "print(json.dumps(parsed, indent=4))"
         elif mode == 'estimator' or mode == 'write':
             return "import pandas\nimport numpy as np\nimport json\n" \
                    + self.converted_code + "\n" \

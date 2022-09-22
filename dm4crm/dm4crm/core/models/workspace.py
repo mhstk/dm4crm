@@ -6,6 +6,7 @@ from .node import *
 from .engine.pandasengine.pandas_engine import PandasEngine
 from .execution.pandas_local_execution_handler import PandasLocalExecutionHandler
 from .schema.schema import Schema
+from .utils import camel_case_split
 
 
 class Workspace:
@@ -82,6 +83,19 @@ class Workspace:
     def get_available_nodes(self):
         return self.available_nodes
 
+    def get_available_nodes_categorized(self) -> Dict:
+        return {"Input/Output": list(self.io_nodes.keys()),
+                "Transform": list(self.transform_nodes.keys()),
+                "Data Mining": list([*self.model_learner_nodes.keys(),
+                                     *self.metrics_node.keys()])
+                }
+
+    def get_nodes_nodes_id(self) -> Dict:
+        dic = {}
+        for node_id, node in self.nodes.items():
+            dic[node] = node_id
+        return dic
+
     def copy_node(self, node_id):
         print('__dict__' in dir(self.nodes[node_id]), self.nodes[node_id])
 
@@ -120,9 +134,11 @@ class Workspace:
         node = self.nodes[node_id]
         if isinstance(node, NonInitialNode):
             for from_node in node.get_in_ports().values():
-                from_node.full_remove_connected_nodes(node)
+                if from_node:
+                    from_node.full_remove_connected_nodes(node)
         for dest_node in node.get_out_ports().values():
-            node.full_remove_connected_nodes(dest_node)
+            if dest_node:
+                node.full_remove_connected_nodes(dest_node)
         for connection in self.connections:
             if connection[0] == node_id or connection[1] == node_id:
                 self.connections.remove(connection)
@@ -151,7 +167,7 @@ class Workspace:
                                  for f_node, d_node, f_port, d_port in self.connections])
         df.refresh()
         self.engine.dataflow = df
-        self.engine.convert_code()
+        self.engine.convert_code(nodes=self.get_nodes_nodes_id())
         return
 
     def run_code(self, code: str, output_type: str = 'console', node_mode: str = 'dataframe') -> Any:
@@ -180,3 +196,4 @@ class Workspace:
             mode = 'metrics'
         code: str = self.engine.runnable_code(mode)
         return self.run_code(code, 'console', node_mode=mode)
+

@@ -4,7 +4,7 @@ from ..initial_node import InitialNode
 class CSVReaderNode(InitialNode):
     __slots__ = 'file_path', 'read_header'
 
-    def __init__(self, file_path: str, read_header: bool = True) -> None:
+    def __init__(self, file_path: str = "", read_header: bool = True) -> None:
         super().__init__()
         self.file_path = file_path
         self.read_header = read_header

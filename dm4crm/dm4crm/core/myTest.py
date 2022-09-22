@@ -56,7 +56,7 @@ ws.connect_nodes(node_id5, node_id9, 1, 1)
 
 
 # -----------------------------------
-ws.compile(node_id9)
+ws.compile(node_id8)
 x = ws.show()
-x = json.dumps(x, indent=4)
-print(x)
+# x = json.dumps(x, indent=4)
+print(x["output"])
