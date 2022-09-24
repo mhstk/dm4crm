@@ -18,7 +18,7 @@ class GroupbyConverter(Converter):
             if not node.group_columns:
                 code_str += '\n'
                 code_str += f'{out_port_ident} = {in_port_ident}'
-            code_str += f'.agg({node.agg_functions})\n'
+            code_str += f'.agg(**{node.agg_functions})\n'
             code_str += f'{out_port_ident}.columns = list(map("".join, {out_port_ident}.columns.values))\n'
 
         return code_str

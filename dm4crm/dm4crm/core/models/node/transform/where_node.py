@@ -2,7 +2,7 @@ from ..non_initial_node import NonInitialNode
 
 
 class WhereNode(NonInitialNode):
-    __slots__ = 'query'
+    __slots__ = 'query',
 
     def __init__(self, query: str = ''):
         super(WhereNode, self).__init__()

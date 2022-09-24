@@ -15,4 +15,16 @@ class MysqlReaderNode(InitialNode):
         self.table = table
 
     def set_attribute(self, *args, **kwargs):
-        pass
+        self.host = kwargs.get("host", self.host)
+        self.port = kwargs.get("port", self.port)
+        self.database = kwargs.get("database", self.database)
+        self.user = kwargs.get("user", self.user)
+        self.password = kwargs.get("password", self.password)
+        self.table = kwargs.get("table", self.table)
+
+
+
+
+
+
+

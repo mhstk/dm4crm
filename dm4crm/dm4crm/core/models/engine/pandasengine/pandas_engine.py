@@ -103,6 +103,9 @@ class PandasEngine(BaseEngine):
     def runnable_code(self, mode: 'str' = 'dataframe') -> str:
         if mode == 'dataframe':
             return "import pandas\nimport numpy as np\nimport json\n" \
+                   "pandas.set_option('display.max_rows', 500)\n" \
+                   "pandas.set_option('display.max_columns', 500)\n" \
+                   "pandas.set_option('display.width', 1000)\n" \
                    + self.converted_code + "\n" \
                    + "result = ident0.iloc[0:20]\n" \
                    + "print(result)\nprint('#LOG#ENDRUNNIG#')\n"

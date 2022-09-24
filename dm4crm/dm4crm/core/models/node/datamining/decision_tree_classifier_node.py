@@ -2,7 +2,7 @@ from ..non_initial_node import NonInitialNode
 
 
 class DecisionTreeClassifierNode(NonInitialNode):
-    __slots__ = 'max_depth'
+    __slots__ = ('max_depth', )
 
     def __init__(self, max_depth: int = 5):
         super(DecisionTreeClassifierNode, self).__init__()

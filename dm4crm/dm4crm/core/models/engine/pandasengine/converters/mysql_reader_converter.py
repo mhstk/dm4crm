@@ -12,11 +12,12 @@ class MysqlReaderConverter(Converter):
         out_port_ident = self.get_node_wrapper().get_out_idents()[0]
         code_str = ""
 
-        code_str += f'import mysql.connector as connection\n'
+        # code_str += f'import mysql.connector as connection\n'
+        code_str += f'import mariadb\n'
         code_str += f'mydb = None\n'
         code_str += f'''try:
-    mydb = connection.connect(host="{node.host}", port={node.port},\
-    database="{node.database}",user="{node.user}", passwd="{node.password}",use_pure=True)
+    mydb = mariadb.connect(host="{node.host}", port={node.port},\
+    database="{node.database}",user="{node.user}", password="{node.password}")
     query = "Select * from {node.table};"
     {out_port_ident} = pandas.read_sql(query,mydb)
     mydb.close() #close the connection
@@ -26,8 +27,6 @@ except Exception as e:
     print(str(e))
     exit()
         '''
-
-
 
         return code_str
 

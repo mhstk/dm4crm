@@ -6,6 +6,7 @@ class ConcatNode(NonInitialNode):
 
     def __init__(self):
         super(ConcatNode, self).__init__()
+        self.set_in_port(None, 1)
 
     def set_attribute(self, *args, **kwargs):
         pass

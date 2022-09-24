@@ -14,10 +14,13 @@ class Workspace:
 
     def __init__(self, engine_type: str = '') -> None:
         self.nodes: Dict = {}
+        self.nodes_ui_pos: Dict = {}
         self.engine_type: str = engine_type
+        self.crm_info = {"host": None, "port": None, "user": None, "database": None, "password": None}
         self.engine: Optional[BaseEngine] = None
         self.available_nodes: Dict = {}
         self.connections: List = []
+        self.save_ws_file = ""
         self.new_node_id = 0
         self.io_nodes = {"CSVReader": CSVReaderNode,
                          "CSVWriter": CSVWriterNode,
@@ -47,23 +50,86 @@ class Workspace:
                                     "NeuralNetworkClassifier": NeuralNetworkClassifierNode}
         self.metrics_node = {"Score": ScoreNode}
         self.data_mining_nodes = {**self.model_learner_nodes, **self.metrics_node, "Predict": PredictNode}
+        self.available_nodes = {**self.io_nodes,
+                                **self.transform_nodes,
+                                **self.data_mining_nodes}
 
     @staticmethod
     def get_workspace():
         if Workspace.ws:
             return Workspace.ws
         Workspace.ws = Workspace()
-        Workspace.ws.available_nodes = {**Workspace.ws.io_nodes,
-                                        **Workspace.ws.transform_nodes,
-                                        **Workspace.ws.data_mining_nodes}
         return Workspace.ws
 
     def reset_workspace(self):
         Workspace.ws = None
         Workspace.get_workspace()
 
+    def set_attributes(self, *args, **kwargs):
+        self.engine_type = kwargs.get("engine_type", self.engine_type)
+        self.set_save_file(kwargs.get("save_ws_file", self.save_ws_file))
+        if self.engine_type == 'pandas':
+            self.engine = cast(PandasEngine, self.engine)
+            self.engine.set_run_env(kwargs.get("run_env", self.engine.execution_handler.executor.run_env))
+            self.engine.set_temp_dir(kwargs.get("temp_dir", self.engine.execution_handler.executor.temp_dir))
+
+
+    def set_save_file(self, filename: str) -> None:
+        if not filename.endswith('.ws'):
+            filename += '.ws'
+        self.save_ws_file = filename
+
+    def get_workspace_info(self):
+        dic: Dict = {}
+        dic["engine_type"] = self.engine_type
+        dic["nodes"] = self.nodes
+        dic["crm_info"] = self.crm_info
+        dic["nodes_ui_pos"] = self.nodes_ui_pos
+        dic["connections"] = self.connections
+        dic["new_node_id"] = self.new_node_id
+        if self.engine_type == 'pandas':
+            d = {}
+            self.engine.execution_handler = cast(PandasLocalExecutionHandler, self.engine.execution_handler)
+            d["run_env"] = self.engine.execution_handler.executor.run_env
+            d["temp_dir"] = self.engine.execution_handler.executor.temp_dir
+            dic["engine"] = d
+        return dic
+
+    def save_workspace(self):
+        import pickle
+        with open(self.save_ws_file, "wb") as f:
+            dic: Dict = self.get_workspace_info()
+            pickle.dump(dic, f)
+
+    @staticmethod
+    def load_workspace(save_ws_file: str):
+        import pickle
+        with open(save_ws_file, "rb") as f:
+            dic = pickle.load(f)
+            Workspace.ws = Workspace()
+            Workspace.ws.engine_type = dic["engine_type"]
+            Workspace.ws.nodes = dic["nodes"]
+            Workspace.ws.crm_info = dic["crm_info"]
+            Workspace.ws.nodes_ui_pos = dic["nodes_ui_pos"]
+            Workspace.ws.connections = dic["connections"]
+            Workspace.ws.save_ws_file = save_ws_file
+            for origin_node_id, dest_node_id, origin_node_port, dest_node_port in Workspace.ws.connections:
+                Workspace.ws.connect_nodes(origin_node_id, dest_node_id, origin_node_port, dest_node_port)
+            Workspace.ws.new_node_id = dic["new_node_id"]
+            if Workspace.ws.engine_type == 'pandas':
+                pe: PandasEngine = PandasEngine()
+                pe.execution_handler = PandasLocalExecutionHandler()
+                pe.set_run_env(dic["engine"]["run_env"])
+                pe.set_temp_dir(dic["engine"]["temp_dir"])
+                pe.execution_handler.create_executor()
+                Workspace.ws.engine = cast(PandasEngine, Workspace.ws.engine)
+                Workspace.ws.engine = pe
+
     def get_nodes(self):
         return self.nodes
+
+    def set_node_ui_pos(self, node_id, pos_x, pos_y):
+        self.nodes_ui_pos[node_id] = (pos_x, pos_y)
 
     def get_connected_nodes(self):
         return self.connections
@@ -87,7 +153,8 @@ class Workspace:
         return {"Input/Output": list(self.io_nodes.keys()),
                 "Transform": list(self.transform_nodes.keys()),
                 "Data Mining": list([*self.model_learner_nodes.keys(),
-                                     *self.metrics_node.keys()])
+                                     *self.metrics_node.keys(),
+                                     "Predict"])
                 }
 
     def get_nodes_nodes_id(self) -> Dict:
@@ -127,6 +194,7 @@ class Workspace:
         self.connections.append((from_node_id, dest_node_id, from_port, dest_port))
 
     def disconnect_nodes(self, from_node_id: int, dest_node_id: int, from_port: int = 0, dest_port: int = 0):
+        self.connections.remove((from_node_id, dest_node_id, from_port, dest_port))
         dest_node: NonInitialNode = cast(NonInitialNode, self.nodes[dest_node_id])
         self.nodes[from_node_id].remove_connected_node(dest_node, from_port, dest_port)
 
@@ -183,9 +251,9 @@ class Workspace:
     def show(self):
         self.engine = cast(BaseEngine, self.engine)
         mode = ''
-        if type(self.engine.dataflow.target_node) in self.transform_nodes.values() or\
+        if type(self.engine.dataflow.target_node) in self.transform_nodes.values() or \
                 type(self.engine.dataflow.target_node) == PredictNode or \
-                type(self.engine.dataflow.target_node) == CSVReaderNode or\
+                type(self.engine.dataflow.target_node) == CSVReaderNode or \
                 type(self.engine.dataflow.target_node) == MysqlReaderNode:
             mode = 'dataframe'
         elif type(self.engine.dataflow.target_node) in self.model_learner_nodes.values():
@@ -196,4 +264,3 @@ class Workspace:
             mode = 'metrics'
         code: str = self.engine.runnable_code(mode)
         return self.run_code(code, 'console', node_mode=mode)
-

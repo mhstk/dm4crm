@@ -4,7 +4,7 @@ from ..non_initial_node import NonInitialNode
 
 
 class TrainTestSplitNode(NonInitialNode):
-    __slots__ = 'train_size'
+    __slots__ = 'train_size',
 
     def __init__(self, train_size: Union[int, float] = 0.75):
         super(TrainTestSplitNode, self).__init__()

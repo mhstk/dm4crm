@@ -58,7 +58,9 @@ class PandasExecutor(Executor):
         print("DONE\n\n-----------------------")
         output = output.decode('utf8')
         if error:
-            output += "\nError: \n" + error.decode('utf8')
+            for line in error.decode('utf8').splitlines():
+                if "warning" not in line.lower():
+                    output += "\nError: \n" + line
         return output
 
         # for line in process.stdout:
@@ -77,7 +79,7 @@ class PandasExecutor(Executor):
             self.output = cast(Schema, self.output)
             # print(out_str)
             for line in out_str.splitlines():
-                if line and not line.startswith("DEL#"):
+                if line and not line.startswith("DEL#") and not line.startswith("#LOG#"):
                     col, col_type = line.split(" ")
                     new_col = Column(name=col, type=col_type)
                     self.output.columns.append(new_col)

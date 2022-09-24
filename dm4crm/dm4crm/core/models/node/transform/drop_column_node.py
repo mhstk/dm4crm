@@ -4,7 +4,7 @@ from ..non_initial_node import NonInitialNode
 
 
 class DropColumnNode(NonInitialNode):
-    __slots__ = 'target_column'
+    __slots__ = ('target_column',)
 
     def __init__(self, target_column: Optional[List] = None):
         super(DropColumnNode, self).__init__()

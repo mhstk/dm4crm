@@ -4,7 +4,7 @@ from ..non_initial_node import NonInitialNode
 
 
 class ChangeColumnTypeNode(NonInitialNode):
-    __slots__ = 'new_type'
+    __slots__ = 'new_type',
 
     def __init__(self, new_type: Optional[Dict] = None):
         super(ChangeColumnTypeNode, self).__init__()

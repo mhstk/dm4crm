@@ -47,7 +47,7 @@ ws.connect_nodes(node_id6, node_id8, 0, 1)
 
 # ws.connect_nodes(node_id8, node_id9, 0, 1)
 # ws.connect_nodes(node_id6, node_id9, 1, 0)
-# ws.connect_nodes(node_id5, node_id10, 1, 1)
+# ws.connect_nodes(node_id5, node_id10, 1, 1)w
 # ws.connect_nodes(node_id9, node_id10, 0, 0)
 # ws.connect_nodes(node_id9, node_id10, 0, 0)
 
@@ -56,7 +56,10 @@ ws.connect_nodes(node_id5, node_id9, 1, 1)
 
 
 # -----------------------------------
-ws.compile(node_id8)
-x = ws.show()
-# x = json.dumps(x, indent=4)
-print(x["output"])
+ws.set_save_file(r"C:\Users\mhset\OneDrive\Desktop\workspace2")
+ws.save_workspace()
+# ws.compile(node_id9)
+# x = ws.show()
+# # x = json.dumps(x, indent=4)
+# print(x["output"])
+# print(ws.get_schema())
