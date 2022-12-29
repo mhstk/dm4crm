@@ -4,7 +4,9 @@ from .dataflow import Dataflow
 from .engine.baseengine.base_engine import BaseEngine
 from .node import *
 from .engine.pandasengine.pandas_engine import PandasEngine
+from .engine.sparkengine.spark_engine import SparkEngine
 from .execution.pandas_local_execution_handler import PandasLocalExecutionHandler
+from .execution.spark_local_execution_handler import SparkLocalExecutionHandler
 from .schema.schema import Schema
 from .utils import camel_case_split
 
@@ -18,7 +20,6 @@ class Workspace:
         self.engine_type: str = engine_type
         self.crm_info = {"host": None, "port": None, "user": None, "database": None, "password": None}
         self.engine: Optional[BaseEngine] = None
-        self.available_nodes: Dict = {}
         self.connections: List = []
         self.save_ws_file = ""
         self.new_node_id = 0
@@ -43,16 +44,29 @@ class Workspace:
                                 "DropColumn": DropColumnNode,
                                 "TrainTestSplit": TrainTestSplitNode,
                                 "Concat": ConcatNode,
-                                "Duplicate": DuplicateNode}
+                                "Duplicate": DuplicateNode,
+                                "CategoryToNum": CategoryToNumNode,
+                                "ToNumeric": ToNumericNode,
+                                "DropNa": DropNaNode
+                                }
         self.model_learner_nodes = {"LogisticRegression": LogisticRegressionNode,
                                     "DecisionTreeClassifier": DecisionTreeClassifierNode,
                                     "RandomForestClassifier": RandomForestClassifierNode,
                                     "NeuralNetworkClassifier": NeuralNetworkClassifierNode}
         self.metrics_node = {"Score": ScoreNode}
+        self.crm_nodes = {"AccountsCrm": AccountsCrmNode,
+                          "CampaignsCrm": CampaignsCrmNode
+                          }
         self.data_mining_nodes = {**self.model_learner_nodes, **self.metrics_node, "Predict": PredictNode}
         self.available_nodes = {**self.io_nodes,
                                 **self.transform_nodes,
-                                **self.data_mining_nodes}
+                                **self.data_mining_nodes,
+                                **self.crm_nodes}
+        self.set_attributes(crm_info={"host": "192.168.0.164",
+                                      "port": "3307",
+                                      "user": "bn_suitecrm",
+                                      "database": "bitnami_suitecrm",
+                                      "password": "bitnami123"})
 
     @staticmethod
     def get_workspace():
@@ -67,12 +81,23 @@ class Workspace:
 
     def set_attributes(self, *args, **kwargs):
         self.engine_type = kwargs.get("engine_type", self.engine_type)
+        print(self.engine_type)
+        self.crm_info = kwargs.get("crm_info", self.crm_info)
         self.set_save_file(kwargs.get("save_ws_file", self.save_ws_file))
         if self.engine_type == 'pandas':
+            self.engine = None
+            self.new_engine()
             self.engine = cast(PandasEngine, self.engine)
             self.engine.set_run_env(kwargs.get("run_env", self.engine.execution_handler.executor.run_env))
             self.engine.set_temp_dir(kwargs.get("temp_dir", self.engine.execution_handler.executor.temp_dir))
-
+            self.new_engine()
+        elif self.engine_type == 'spark':
+            self.engine = None
+            self.new_engine()
+            self.engine = cast(SparkEngine, self.engine)
+            self.engine.set_spark_home(kwargs.get("run_env", self.engine.execution_handler.executor.spark_home))
+            self.engine.set_temp_dir(kwargs.get("temp_dir", self.engine.execution_handler.executor.temp_dir))
+        print(self.engine_type)
 
     def set_save_file(self, filename: str) -> None:
         if not filename.endswith('.ws'):
@@ -93,6 +118,13 @@ class Workspace:
             d["run_env"] = self.engine.execution_handler.executor.run_env
             d["temp_dir"] = self.engine.execution_handler.executor.temp_dir
             dic["engine"] = d
+        elif self.engine_type == 'spark':
+            d = {}
+            self.engine.execution_handler = cast(SparkLocalExecutionHandler, self.engine.execution_handler)
+            print(self.engine.execution_handler.executor.spark_home)
+            d["run_env"] = self.engine.execution_handler.executor.spark_home
+            d["temp_dir"] = self.engine.execution_handler.executor.temp_dir
+            dic["engine"] = d
         return dic
 
     def save_workspace(self):
@@ -109,12 +141,15 @@ class Workspace:
             Workspace.ws = Workspace()
             Workspace.ws.engine_type = dic["engine_type"]
             Workspace.ws.nodes = dic["nodes"]
+            print(Workspace.ws.nodes)
             Workspace.ws.crm_info = dic["crm_info"]
             Workspace.ws.nodes_ui_pos = dic["nodes_ui_pos"]
             Workspace.ws.connections = dic["connections"]
+            print(Workspace.ws.connections)
             Workspace.ws.save_ws_file = save_ws_file
             for origin_node_id, dest_node_id, origin_node_port, dest_node_port in Workspace.ws.connections:
-                Workspace.ws.connect_nodes(origin_node_id, dest_node_id, origin_node_port, dest_node_port)
+                if Workspace.ws.nodes[origin_node_id] and Workspace.ws.nodes[dest_node_id]:
+                    Workspace.ws.connect_nodes(origin_node_id, dest_node_id, origin_node_port, dest_node_port)
             Workspace.ws.new_node_id = dic["new_node_id"]
             if Workspace.ws.engine_type == 'pandas':
                 pe: PandasEngine = PandasEngine()
@@ -124,6 +159,15 @@ class Workspace:
                 pe.execution_handler.create_executor()
                 Workspace.ws.engine = cast(PandasEngine, Workspace.ws.engine)
                 Workspace.ws.engine = pe
+            elif Workspace.ws.engine_type == 'spark':
+                se: SparkEngine = SparkEngine()
+                se.execution_handler = SparkLocalExecutionHandler()
+                se.set_spark_home(dic["engine"]["run_env"])
+                se.set_temp_dir(dic["engine"]["temp_dir"])
+                se.execution_handler.create_executor()
+                Workspace.ws.engine = cast(SparkEngine, Workspace.ws.engine)
+                Workspace.ws.engine = se
+            print(dic["engine"]["run_env"])
 
     def get_nodes(self):
         return self.nodes
@@ -150,12 +194,14 @@ class Workspace:
         return self.available_nodes
 
     def get_available_nodes_categorized(self) -> Dict:
-        return {"Input/Output": list(self.io_nodes.keys()),
-                "Transform": list(self.transform_nodes.keys()),
-                "Data Mining": list([*self.model_learner_nodes.keys(),
-                                     *self.metrics_node.keys(),
-                                     "Predict"])
-                }
+        return {
+            "CRM": list(self.crm_nodes.keys()),
+            "Input/Output": list(self.io_nodes.keys()),
+            "Transform": list(self.transform_nodes.keys()),
+            "Data Mining": list([*self.model_learner_nodes.keys(),
+                                 *self.metrics_node.keys(),
+                                 "Predict"])
+        }
 
     def get_nodes_nodes_id(self) -> Dict:
         dic = {}
@@ -169,7 +215,11 @@ class Workspace:
     def create_node(self, node_type: str, **kwargs) -> int:
         new_node: GeneralNode
         if node_type in self.available_nodes:
-            kwargs = {key: kwargs[key] for key in kwargs.keys() if key in self.available_nodes[node_type].__slots__}
+            if node_type in self.crm_nodes:
+                kwargs = {**self.crm_info}
+            else:
+                kwargs = {key: kwargs[key] for key in kwargs.keys() if key in self.available_nodes[node_type].__slots__}
+
             new_node = self.available_nodes[node_type](**kwargs)
         else:
             raise Exception("There is no node with this type")
@@ -224,6 +274,14 @@ class Workspace:
             pe.execution_handler.create_executor()
             self.engine = cast(PandasEngine, self.engine)
             self.engine = pe
+        elif self.engine_type == 'spark':
+            se: SparkEngine = SparkEngine()
+            se.execution_handler = SparkLocalExecutionHandler()
+            se.set_spark_home(r"C:\Users\mhset\OneDrive\Desktop\Project_ws\spark_home\spark-3.2.0-bin-hadoop3.2")
+            se.set_temp_dir(r"C:\Users\mhset\OneDrive\Desktop\Project_ws\temp")
+            se.execution_handler.create_executor()
+            self.engine = cast(SparkEngine, self.engine)
+            self.engine = se
         return None
 
     def compile(self, node_id: int) -> None:
@@ -254,7 +312,8 @@ class Workspace:
         if type(self.engine.dataflow.target_node) in self.transform_nodes.values() or \
                 type(self.engine.dataflow.target_node) == PredictNode or \
                 type(self.engine.dataflow.target_node) == CSVReaderNode or \
-                type(self.engine.dataflow.target_node) == MysqlReaderNode:
+                type(self.engine.dataflow.target_node) == MysqlReaderNode or \
+                type(self.engine.dataflow.target_node) in self.crm_nodes.values():
             mode = 'dataframe'
         elif type(self.engine.dataflow.target_node) in self.model_learner_nodes.values():
             mode = 'estimator'

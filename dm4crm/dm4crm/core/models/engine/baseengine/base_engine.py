@@ -64,6 +64,10 @@ class BaseEngine(ABC):
         pass
 
     @abstractmethod
+    def model_run_code(self) -> str:
+        pass
+
+    @abstractmethod
     def runnable_code(self, mode: str) -> str:
         pass
 

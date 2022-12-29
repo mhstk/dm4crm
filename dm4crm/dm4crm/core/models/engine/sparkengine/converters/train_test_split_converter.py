@@ -14,8 +14,9 @@ class TrainTestSplitConverter(Converter):
         in_port_ident = self.get_node_wrapper().get_in_idents()[0]
         code_str = ""
 
-        code_str += 'from sklearn.model_selection import train_test_split\n'
-        code_str += f'{out_port_ident}, {out_port_ident1} = train_test_split({in_port_ident}, ' \
-                    f'train_size={node.train_size})'
+        code_str += f'total = {1 if isinstance(node.train_size, float) else f"{in_port_ident}.count()"}\n'
+        code_str += f'{out_port_ident}, {out_port_ident1} = {in_port_ident}' \
+                    f'.randomSplit([{float(node.train_size)}, float(total - {node.train_size})])'
+
         return code_str
 

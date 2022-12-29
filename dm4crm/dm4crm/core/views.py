@@ -14,8 +14,9 @@ from .models.workspace import Workspace, GeneralNode, InitialNode, NonInitialNod
 
 def get_workspace():
     ws = Workspace.get_workspace()
-    ws.engine_type = 'pandas'
-    ws.new_engine()
+    if not ws.engine_type:
+        ws.engine_type = 'pandas'
+        ws.new_engine()
     return ws
 
 
@@ -90,6 +91,8 @@ def node_name_info(request, node_name):
         **ports,
         "params": [x for x in ws.get_available_nodes()[node_name].__slots__ if x != '_in_port' and x != '_out_port']
     }
+    if type(temp) in ws.crm_nodes.values():
+        info["params"] = []
     return JsonResponse({"status": 0, "data": info})
 
 
@@ -158,10 +161,12 @@ def view_node(request, node_id):
 def settings(request):
     if request.method == 'GET':
         ws = get_workspace()
-        dic: Dict = {"engine_type": ws.engine_type,
+        print(ws)
+        info = ws.get_workspace_info()
+        dic: Dict = {"engine_type": info["engine_type"],
                      "save_ws_file": ws.save_ws_file,
-                     "run_env": ws.engine.execution_handler.executor.run_env,
-                     "temp_dir": ws.engine.execution_handler.executor.temp_dir
+                     "run_env": info["engine"]["run_env"],
+                     "temp_dir": info["engine"]["temp_dir"]
                      }
         return JsonResponse({"status": 0, "data": dic})
     elif request.method == 'POST':

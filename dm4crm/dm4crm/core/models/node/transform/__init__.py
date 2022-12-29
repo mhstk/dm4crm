@@ -17,3 +17,6 @@ from .drop_column_node import DropColumnNode
 from .train_test_split_node import TrainTestSplitNode
 from .concat_node import ConcatNode
 from .duplicate_node import DuplicateNode
+from .category_to_num_node import CategoryToNumNode
+from .to_numeric_node import ToNumericNode
+from .drop_na_node import DropNaNode

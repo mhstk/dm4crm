@@ -6,15 +6,15 @@ from ...execution.executor import Executor
 from ...node import *
 from ..baseengine.base_engine import BaseEngine
 from ..baseengine.converter import Converter
-from ...execution.pandas_local_execution_handler import PandasLocalExecutionHandler
+from ...execution.spark_local_execution_handler import SparkLocalExecutionHandler
 from ...schema.schema import Schema
 
 
-class PandasEngine(BaseEngine):
+class SparkEngine(BaseEngine):
 
     def __init__(self) -> None:
         super().__init__()
-        self.execution_handler: PandasLocalExecutionHandler = cast(PandasLocalExecutionHandler, self.execution_handler)
+        self.execution_handler: SparkLocalExecutionHandler = cast(SparkLocalExecutionHandler, self.execution_handler)
         self.node_converter_map: Dict = {LimitNode: LimitConverter,
                                          CSVReaderNode: CSVReaderConverter,
                                          MysqlReaderNode: MysqlReaderConverter,
@@ -51,8 +51,8 @@ class PandasEngine(BaseEngine):
 
                                          }
 
-    def set_run_env(self, run_env: str):
-        self.execution_handler.run_env = run_env
+    def set_spark_home(self, spark_home: str):
+        self.execution_handler.spark_home = spark_home
 
     def set_temp_dir(self, temp_dir: str):
         self.execution_handler.temp_dir = temp_dir
@@ -109,36 +109,51 @@ class PandasEngine(BaseEngine):
 
     def runnable_code(self, mode: 'str' = 'dataframe') -> str:
         if mode == 'dataframe':
-            return "import pandas\nimport numpy as np\nimport json\n" \
-                   "pandas.set_option('display.max_rows', 500)\n" \
-                   "pandas.set_option('display.max_columns', 5000)\n" \
-                   "pandas.set_option('display.width', 10000)\n" \
-                   + self.converted_code + "\n" \
-                   + "result = ident0.iloc[0:20]\n" \
-                   + "print(result)\nprint('#LOG#ENDRUNNIG#')\n"
-                   # + "result = ident0.iloc[0:20].to_json(orient='table')\n" \
-                   # + "parsed = json.loads(result)\n" \
-                   # + "print(json.dumps(parsed, indent=4))"
+            return '''from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from pyspark.sql.types import StructType
+spark = SparkSession.builder\\
+                    .appName('SparkByExamples.com') \\
+                    .getOrCreate()\n
+def spark_concat(df1, df2):
+    schema = StructType(df1.schema.fields + df2.schema.fields)
+    df1df2 = df1.rdd.zip(df2.rdd).map(lambda x: x[0]+x[1])
+    return spark.createDataFrame(df1df2, schema)\n
+    
+''' + \
+                   self.converted_code + '\n' + \
+                   "ident0.show(truncate = False)"
         elif mode == 'estimator' or mode == 'write':
-            return "import pandas\nimport numpy as np\nimport json\n" \
-                   + self.converted_code + "\n" \
-                   + 'print("{\\"message\\" : \\"Success\\"}")'
-        # elif mode == 'predict':
-        #     return "import pandas\nimport numpy as np\nimport json\n" \
-        #            + self.converted_code + "\n" \
-        #            + 'result = {"out" :  ident0.values.tolist()}\n' \
-        #            + 'print(json.dumps(result, indent=4))'
+            return '''from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from pyspark.sql.types import StructType
+spark = SparkSession.builder\\
+                    .appName('SparkByExamples.com') \\
+                    .getOrCreate()\n
+def spark_concat(df1, df2):
+    schema = StructType(df1.schema.fields + df2.schema.fields)
+    df1df2 = df1.rdd.zip(df2.rdd).map(lambda x: x[0]+x[1])
+    return spark.createDataFrame(df1df2, schema)\n
+    
+''' + \
+                   self.converted_code + '\n' + \
+                   "print(ident0)"
         elif mode == 'metrics':
-            return "import pandas\nimport numpy as np\nimport json\n" \
-                   + self.converted_code + "\n" \
-                   + 'print(json.dumps(ident0, indent=4))'
+            return '''from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from pyspark.sql.types import StructType
+import json
+spark = SparkSession.builder\\
+                    .appName('SparkByExamples.com') \\
+                    .getOrCreate()\n
+def spark_concat(df1, df2):
+    schema = StructType(df1.schema.fields + df2.schema.fields)
+    df1df2 = df1.rdd.zip(df2.rdd).map(lambda x: x[0]+x[1])
+    return spark.createDataFrame(df1df2, schema)\n
+    
+''' + \
+                   self.converted_code + '\n' + \
+                   'print(json.dumps(ident0, indent=4))'
 
     def schema_code(self) -> str:
-        return "import pandas\n" \
-               + self.converted_code + "\n" \
-               + '''
-for index, value in ident0.dtypes.items():
-    print(index, value)
-print("DEL####DEL")
-for index, value in ident0.isnull().sum().items():
-    print(index, value)\n'''
+        return
