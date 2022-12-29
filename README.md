@@ -1,6 +1,10 @@
-# A GUI Analytic Service for SuiteCRM
+# DM4CRM
+## A GUI Data Mining Service for SuiteCRM
 
-This is the output system of my bacholar's thesis project at Amirkabir University. In this project, I developed a GUI analytical system that can extract data from an open source CRM called SuiteCRM and other data sources and is able to perform diffrent transformation on the data and prepare it for analytic processes and even machine learning algorithms.
+This is the output system of my bachelor's thesis project at Amirkabir University. In this project, I developed a GUI analytical system that can extract data from an open source CRM called SuiteCRM and other data sources and is able to perform diffrent transformation on the data and prepare it for data mining processes and even machine learning algorithms.
+
+![App Screenshot](./resources/Picture1.png)
+![App Screenshot](./resources/Picture2.png)
 
 
 ## Getting Started
